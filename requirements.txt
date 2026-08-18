@@ -1,0 +1,10 @@
+pykan
+torch
+numpy
+pandas
+scikit-learn
+sympy
+fastapi
+uvicorn[standard]
+pyyaml
+joblib

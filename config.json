@@ -1,0 +1,61 @@
+{
+    "features": [
+        "Voltage_mean",
+        "Voltage_min",
+        "Voltage_max",
+        "Voltage_std",
+        "Voltage_range",
+        "Voltage_slope",
+        "Current_mean",
+        "Current_min",
+        "Current_max",
+        "Current_std",
+        "Current_range",
+        "Current_slop",
+        "Time_mean",
+        "Time_max",
+        "Time_min",
+        "Time_range",
+        "Time_std",
+        "Time_slope",
+        "Temp_mean",
+        "Temp_max",
+        "Temp_min",
+        "Temp_range",
+        "Temp_std",
+        "Temp_slope",
+        "Capacity"
+    ],
+    "target": "RUL",
+    "window": 10,
+    "training_batteries": [
+        "B0005",
+        "B0006",
+        "B0007",
+        "B0018"
+    ],
+    "hyperparameters": {
+        "grid": 3,
+        "hidden_dim": 8,
+        "k": 3,
+        "lamb": 0.01,
+        "lamb_entropy": 2
+    },
+    "input_id": [
+        12,
+        16,
+        41,
+        63,
+        87,
+        115,
+        116,
+        140,
+        187,
+        188,
+        215,
+        238,
+        240
+    ],
+    "original_input_count": 250,
+    "pruned_input_count": 13
+}
