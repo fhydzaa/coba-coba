@@ -1,11 +1,11 @@
-pykan
-torch
+fastapi
+uvicorn[standard]
 numpy
 pandas
 scikit-learn
+matplotlib
 sympy
-fastapi
-uvicorn[standard]
 pyyaml
 joblib
-matplotlib
+pykan
+torch
