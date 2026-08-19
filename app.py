@@ -72,8 +72,6 @@ def root():
     )
 
 
-<<<<<<< HEAD
-=======
 @app.get("/health")
 def health():
     return {
@@ -88,7 +86,6 @@ def disk():
         "used_gb": round(used / 1024**3, 2),
         "free_gb": round(free / 1024**3, 2),
     }
->>>>>>> 208cf7dfdf92847ac8f05e3f93a415356d243f7c
 
 
 @app.get("/storage")
