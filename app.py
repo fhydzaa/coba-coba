@@ -58,10 +58,10 @@ predictor = RULPredictor(
 # REQUEST
 # ============================================================
 
+from typing import Any, Dict, List
+
 class PredictionRequest(BaseModel):
-
-    data: List[Dict[str, float]]
-
+    data: List[Dict[str, Any]]
 
 # ============================================================
 # HEALTH CHECK
