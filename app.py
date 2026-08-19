@@ -3,6 +3,7 @@
 # ============================================================
 import os
 from pathlib import Path
+import pandas as pd
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from typing import List, Dict
@@ -13,7 +14,12 @@ from pydantic import BaseModel
 from predictor import RULPredictor
 
 import shutil
+from io import BytesIO
 
+from fastapi import (
+    UploadFile,
+    File
+)
 
 # ============================================================
 # APP
@@ -151,6 +157,56 @@ def storage_files():
 # ============================================================
 # PREDICT
 # ============================================================
+@app.post("/predict-file")
+async def predict_file(
+    file: UploadFile = File(...)
+):
+
+    filename = file.filename or ""
+
+    if not filename.lower().endswith(
+        ".xlsx"
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="File harus berformat .xlsx"
+        )
+
+    try:
+        content = await file.read()
+
+        df = pd.read_excel(
+            BytesIO(content)
+        )
+
+        result = predictor.predict(df)
+
+        response = {
+            "success": True,
+            "filename": filename,
+            **result
+        }
+
+        # RUL hanya untuk evaluasi jika ada
+        if "RUL" in df.columns:
+            last_rul = (
+                df
+                .sort_values("Discharge_cycle")
+                .iloc[-1]["RUL"]
+            )
+
+            response["actual_rul"] = float(
+                last_rul
+            )
+
+        return response
+
+    except Exception as e:
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
 
 @app.post("/predict")
 def predict(

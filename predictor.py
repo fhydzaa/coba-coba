@@ -251,89 +251,82 @@ class RULPredictor:
 
     def prepare_input(self, data):
 
-        # Dict → DataFrame
         if isinstance(data, (dict, list)):
             data = pd.DataFrame(data)
 
+        elif not isinstance(data, pd.DataFrame):
+            raise ValueError(
+                "Input harus berupa DataFrame, dict, atau list."
+            )
 
         data = data.copy()
 
+        # ========================================================
+        # VALIDASI 25 FEATURE
+        # ========================================================
 
-        # ----------------------------------------------------
-        # Check minimum window
-        # ----------------------------------------------------
-
-        if len(data) < self.window:
-
-            raise ValueError(
-                f"Minimal membutuhkan "
-                f"{self.window} observasi."
-            )
-
-
-        # ----------------------------------------------------
-        # Sort by cycle jika tersedia
-        # ----------------------------------------------------
-
-        if "Discharge_cycle" in data.columns:
-
-            data = data.sort_values(
-                "Discharge_cycle"
-            )
-
-
-        # Ambil 10 observasi terakhir
-        data = data.tail(
-            self.window
-        )
-
-
-        # ----------------------------------------------------
-        # Check features
-        # ----------------------------------------------------
-
-        missing = [
-            col
-            for col in self.features
-            if col not in data.columns
+        missing_features = [
+            feature
+            for feature in self.features
+            if feature not in data.columns
         ]
 
-        if missing:
-
+        if missing_features:
             raise ValueError(
-                f"Feature tidak ditemukan: {missing}"
+                "Feature berikut tidak ditemukan: "
+                + ", ".join(missing_features)
             )
 
+        # ========================================================
+        # VALIDASI CYCLE
+        # ========================================================
 
-        # ----------------------------------------------------
-        # Raw feature
-        # ----------------------------------------------------
+        if "Discharge_cycle" not in data.columns:
+            raise ValueError(
+                "Kolom 'Discharge_cycle' wajib ada."
+            )
 
-        X_raw = data[
-            self.features
-        ].values.astype(
-            np.float32
+        if len(data) < self.window:
+            raise ValueError(
+                f"Minimal membutuhkan {self.window} cycle."
+            )
+
+        # ========================================================
+        # SORT + AMBIL 10 CYCLE TERAKHIR
+        # ========================================================
+
+        data = (
+            data
+            .sort_values("Discharge_cycle")
+            .tail(self.window)
+            .copy()
         )
 
+        # ========================================================
+        # 25 FEATURE
+        # ========================================================
 
-        # ----------------------------------------------------
-        # Scale
-        # ----------------------------------------------------
+        X_raw = (
+            data[self.features]
+            .values
+            .astype(np.float32)
+        )
+
+        # ========================================================
+        # SCALING
+        # ========================================================
 
         X_scaled = self.scaler_x.transform(
             X_raw
         )
 
-
-        # ----------------------------------------------------
-        # Flatten 10 × 25 = 250
-        # ----------------------------------------------------
+        # ========================================================
+        # FLATTEN
+        # ========================================================
 
         X_flat = X_scaled.reshape(
-            1,
-            -1
+            1, -1
         )
-
 
         return X_flat
 
