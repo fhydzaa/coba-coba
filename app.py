@@ -9,6 +9,8 @@ from pydantic import BaseModel
 
 from predictor import RULPredictor
 
+import shutil
+
 
 # ============================================================
 # APP
@@ -61,6 +63,14 @@ def health():
         "status": "ok"
     }
 
+@app.get("/disk")
+def disk():
+    total, used, free = shutil.disk_usage("/")
+    return {
+        "total_gb": round(total / 1024**3, 2),
+        "used_gb": round(used / 1024**3, 2),
+        "free_gb": round(free / 1024**3, 2),
+    }
 # ============================================================
 # PREDICT
 # ============================================================
