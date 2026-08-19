@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Battery RUL Prediction</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 18px;
+            cursor: pointer;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f5f5f5;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: left;
+        }
+
+        .error {
+            color: #b00020;
+        }
+
+        .success {
+            color: #087f23;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Battery RUL Prediction</h1>
+
+    <p>
+        Upload file Excel yang berisi minimal 10 observasi
+        dan 25 fitur model.
+    </p>
+
+    <div class="card">
+
+        <input
+            type="file"
+            id="excelFile"
+            accept=".xlsx,.xls"
+        >
+
+        <br><br>
+
+        <button onclick="processExcel()">
+            Prediksi RUL
+        </button>
+
+        <p id="status"></p>
+
+    </div>
+
+    <div
+        id="preview"
+        class="card"
+        style="display:none;"
+    ></div>
+
+    <div
+        id="result"
+        class="result"
+        style="display:none;"
+    ></div>
+
+
+<script>
+
+async function processExcel() {
+
+    const fileInput =
+        document.getElementById("excelFile");
+
+    const status =
+        document.getElementById("status");
+
+    const preview =
+        document.getElementById("preview");
+
+    const result =
+        document.getElementById("result");
+
+
+    if (!fileInput.files.length) {
+
+        status.innerHTML =
+            '<span class="error">Pilih file Excel terlebih dahulu.</span>';
+
+        return;
+    }
+
+
+    const file =
+        fileInput.files[0];
+
+
+    status.textContent =
+        "Membaca file...";
+
+
+    try {
+
+        const buffer =
+            await file.arrayBuffer();
+
+
+        const workbook =
+            XLSX.read(
+                buffer,
+                {
+                    type: "array"
+                }
+            );
+
+
+        const firstSheet =
+            workbook.Sheets[
+                workbook.SheetNames[0]
+            ];
+
+
+        const data =
+            XLSX.utils.sheet_to_json(
+                firstSheet,
+                {
+                    defval: null
+                }
+            );
+
+
+        if (data.length < 10) {
+
+            throw new Error(
+                "File harus memiliki minimal 10 observasi."
+            );
+        }
+
+
+        // ====================================================
+        // PREVIEW
+        // ====================================================
+
+        preview.style.display = "block";
+
+        preview.innerHTML = `
+            <h3>Preview Data</h3>
+            <p>
+                Jumlah baris:
+                <b>${data.length}</b>
+            </p>
+            <p>
+                Menampilkan 5 baris pertama.
+            </p>
+        `;
+
+
+        // ====================================================
+        // KIRIM KE API
+        // ====================================================
+
+        status.textContent =
+            "Mengirim data ke model...";
+
+
+        const response =
+            await fetch(
+                "/predict",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        data: data
+                    })
+                }
+            );
+
+
+        const responseData =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                responseData.detail ||
+                "Prediction gagal."
+            );
+        }
+
+
+        // ====================================================
+        // TAMPILKAN HASIL
+        // ====================================================
+
+        result.style.display = "block";
+
+        result.innerHTML = `
+            <h3>Hasil Prediksi</h3>
+
+            <p>
+                <b>RUL KAN:</b>
+                ${responseData.kan_rul.toFixed(2)}
+            </p>
+
+            <p>
+                <b>RUL Symbolic:</b>
+                ${responseData.symbolic_rul.toFixed(2)}
+            </p>
+
+            <p>
+                <b>Selisih:</b>
+                ${responseData.difference.toFixed(2)}
+            </p>
+        `;
+
+
+        status.innerHTML =
+            '<span class="success">Prediksi berhasil.</span>';
+
+    }
+
+    catch (error) {
+
+        status.innerHTML =
+            `<span class="error">
+                ${error.message}
+             </span>`;
+
+        result.style.display = "none";
+    }
+}
+
+</script>
+
+</body>
+</html>
