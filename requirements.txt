@@ -11,3 +11,4 @@ tqdm
 pykan
 torch
 openpyxl
+python-multipart
